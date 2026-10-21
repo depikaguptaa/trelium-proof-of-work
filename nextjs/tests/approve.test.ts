@@ -17,7 +17,7 @@ describe("approval flow (SQLite persistence)", () => {
 
   it("persists a report, approves it once, logs to the CRM, then 409s", async () => {
     const saved = await saveReport(compare(samplePo(), sampleInvoice()));
-    expect(saved.report_id).toMatch(/^EXC-\d{4}$/);
+    expect(saved.report_id).toMatch(/^EXC-[0-9A-F]{8}$/);
     expect(saved.status).toBe("EXCEPTION");
     expect(saved.approval.state).toBe("pending");
 

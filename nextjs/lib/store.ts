@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type { Prisma } from "@prisma/client";
 import { getDb } from "./prisma";
 import type { CrmEntry, MatchReportData } from "./types";
@@ -35,8 +36,9 @@ function toReportData(row: ReportRow): MatchReportData {
 
 export async function saveReport(data: MatchReportData): Promise<MatchReportData> {
   const db = getDb();
-  const count = await db.matchReport.count();
-  const id = `EXC-${String(count + 1).padStart(4, "0")}`;
+  // Random suffix, not a row count: two reports saved at the same
+  // instant can no longer generate the same ID.
+  const id = `EXC-${randomUUID().slice(0, 8).toUpperCase()}`;
   const row = await db.matchReport.create({
     data: {
       id,
