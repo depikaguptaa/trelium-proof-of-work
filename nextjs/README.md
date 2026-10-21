@@ -48,7 +48,6 @@ $24.00 vs $24.75.
 ## Run it (Postgres, the default)
 
 ```bash
-cd yc-trelium-ts
 npm install
 cp .env.example .env
 docker compose up -d          # Postgres 16 on localhost:5432
@@ -65,7 +64,9 @@ curl localhost:8077/api/scout/demo
 curl localhost:8077/api/matcher/demo
 curl -X POST localhost:8077/api/matcher/approve \
   -H 'Content-Type: application/json' \
-  -d '{"report_id":"EXC-0001","decision":"approved","approver":"ops-lead","note":"vendor confirmed"}'
+  -d '{"report_id":"EXC-AB12CD34","decision":"approved","approver":"ops-lead","note":"vendor confirmed"}'
+# use the report_id returned by the demo or ingest call above;
+# report IDs are random, they look like EXC-AB12CD34
 curl localhost:8077/api/crm/log
 curl -F "po=@data/sample_po.pdf" -F "invoice=@data/sample_invoice.pdf" \
   localhost:8077/api/matcher/ingest
@@ -122,7 +123,7 @@ scripts/                  sample PDF generator (npm run pdfs:generate)
 prisma/schema.prisma      Postgres schema (default)
 prisma/schema.sqlite.prisma  SQLite mirror for dev without Docker
 data/                     synthetic emails, PO, invoice fixtures (JSON and PDF)
-tests/                    vitest (scout, matcher, approval flow)
+tests/                    vitest (scout, matcher, PDF ingestion, approval flow)
 docker-compose.yml        local Postgres 16
 ```
 

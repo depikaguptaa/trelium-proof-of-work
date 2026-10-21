@@ -50,7 +50,7 @@ npm install
 cp .env.example .env
 docker compose up -d          # Postgres 16
 npm run db:push
-npm run dev                   # http://localhost:3000
+npm run dev                   # http://localhost:8077
 ```
 
 The home page shows the scout clusters, the top opportunity, the matcher
@@ -62,7 +62,8 @@ No Docker handy? A SQLite schema with the same Prisma models is included
 (`prisma/schema.sqlite.prisma`); see `nextjs/README.md` for that flow.
 The build was verified end to end on the SQLite schema: production build
 passes, the demo returns the same clusters and the same $200 freight
-exception as the Python version, approving persists and a second decision
+exception as the Python version, uploading the two sample PDFs returns
+the same exception report, approving persists and a second decision
 on the same report returns 409.
 
 ```bash
