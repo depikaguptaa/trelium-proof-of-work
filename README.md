@@ -26,8 +26,11 @@ Clustering is deterministic (keyword rules). An LLM could polish the
 wording later, it should never decide the ranking.
 
 **2. Deterministic PO/Invoice Matcher**
-- ingests a PO and a vendor invoice (structured fixtures in `data/`;
-  PDF/text extraction would produce the same shape upstream)
+- ingests a PO and a vendor invoice (structured fixtures in `data/`).
+  The TypeScript build also takes real PDFs: upload a PO PDF and an
+  invoice PDF and it extracts the document number, line items, freight
+  and setup fee from the PDF text into the same shape, for the sample
+  layout (general vendor layouts are still future work)
 - compares qty, unit price, freight and setup fee with a pure rules
   engine, deterministic where it matters, no LLM in the decision path
 - emits an exception report: both values, the delta, severity
@@ -52,8 +55,8 @@ npm run dev                   # http://localhost:3000
 
 The home page shows the scout clusters, the top opportunity, the matcher
 report with Approve/Reject buttons, and the CRM log. API routes live
-under `app/api/` (scout demo/analyze, matcher demo/compare/approve,
-crm log, health).
+under `app/api/` (scout demo/analyze, matcher demo/compare/approve/
+ingest, crm log, health).
 
 No Docker handy? A SQLite schema with the same Prisma models is included
 (`prisma/schema.sqlite.prisma`); see `nextjs/README.md` for that flow.
@@ -63,7 +66,7 @@ exception as the Python version, approving persists and a second decision
 on the same report returns 409.
 
 ```bash
-npm test                      # vitest, 9 tests
+npm test                      # vitest, 14 tests
 ```
 
 ## Run the Python build
@@ -91,7 +94,7 @@ curl localhost:8077/crm/log           # the approval, logged to the mock CRM
 ```
 nextjs/            TypeScript build (Next.js, React, Prisma, vitest)
   app/             UI page + API routes
-  lib/             scout, matcher, store (Prisma persistence)
+  lib/             scout, matcher, ingest (PDF extraction), store (Prisma persistence)
   prisma/          Postgres schema + SQLite mirror
   tests/           vitest (scout, matcher, approve flow)
 app/               Python build: FastAPI routes, scout, matcher, mock CRM
@@ -101,8 +104,10 @@ tests/             pytest for the Python build
 
 ## What I'd build next
 
-1. Real ingestion: Gmail/Outlook export + PDF extraction into the same
-   document schema, with per-field confidence and source citations.
+1. Wider ingestion: PDF extraction into the same document schema is
+   built in the TypeScript build for the sample layout. Still to do:
+   arbitrary vendor layouts, Gmail/Outlook export as a source, and
+   per-field confidence with source citations.
 2. The agent runtime behind the scout's prompts: run the generated
    plain-English spec as a workflow with tool calls into a real ERP/CRM
    sandbox, with LLM-observability traces on every run.

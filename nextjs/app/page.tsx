@@ -8,6 +8,10 @@ export default function Home() {
   const [report, setReport] = useState<MatchReportData | null>(null);
   const [crm, setCrm] = useState<CrmEntry[]>([]);
   const [notice, setNotice] = useState("");
+  const [poFile, setPoFile] = useState<File | null>(null);
+  const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   const loadCrm = useCallback(async () => {
     const res = await fetch("/api/crm/log");
@@ -28,6 +32,27 @@ export default function Home() {
   useEffect(() => {
     loadDemo();
   }, [loadDemo]);
+
+  async function uploadAndCompare() {
+    if (!poFile || !invoiceFile) {
+      setUploadError("Pick both a purchase order PDF and an invoice PDF first.");
+      return;
+    }
+    setUploading(true);
+    setUploadError("");
+    const form = new FormData();
+    form.append("po", poFile);
+    form.append("invoice", invoiceFile);
+    const res = await fetch("/api/matcher/ingest", { method: "POST", body: form });
+    const payload = await res.json().catch(() => null);
+    setUploading(false);
+    if (!res.ok) {
+      setUploadError(payload?.detail ?? "Upload failed. Try the sample PDFs from the data folder.");
+      return;
+    }
+    setReport(payload);
+    setNotice("Report built from your uploaded PDFs. It is saved, so you can decide on it in the report above.");
+  }
 
   async function decide(decision: "approved" | "rejected") {
     if (!report) return;
@@ -146,6 +171,44 @@ export default function Home() {
             </button>
           </div>
         )}
+
+        <div style={{ background: "#fff", border: "1px solid #e5e5e5", padding: 16, marginTop: 16 }}>
+          <p style={{ marginTop: 0 }}>
+            <strong>Or compare your own PDFs.</strong> Upload a purchase order
+            PDF and a vendor invoice PDF in the sample layout (the files in the
+            data folder work). The server extracts the document number, line
+            items, freight and setup fee from the PDF text, then runs the same
+            matcher and saves the report.
+          </p>
+          <p>
+            <label>
+              Purchase order PDF{" "}
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={(e) => setPoFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
+          </p>
+          <p>
+            <label>
+              Invoice PDF{" "}
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={(e) => setInvoiceFile(e.target.files?.[0] ?? null)}
+              />
+            </label>
+          </p>
+          <button
+            onClick={uploadAndCompare}
+            disabled={uploading}
+            style={{ padding: "8px 14px" }}
+          >
+            {uploading ? "Extracting and comparing…" : "Upload and compare"}
+          </button>
+          {uploadError && <p style={{ color: "#b91c1c" }}>{uploadError}</p>}
+        </div>
       </section>
 
       <section style={{ marginTop: 36 }}>
