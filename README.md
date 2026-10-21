@@ -1,4 +1,4 @@
-# Paul-lite + PO/Invoice Matcher — a proof-of-work for Trelium
+# Paul-lite + PO/Invoice Matcher, a proof-of-work for Trelium
 
 Built by Depika Gupta as a working demo of Trelium's two public products,
 in her own stack (FastAPI / Python). No API key needed, nothing here touches
@@ -6,7 +6,7 @@ Trelium's codebase.
 
 ## What it does
 
-**1. Automation Scout (`/scout`) — a 'Paul-lite'**
+**1. Automation Scout (`/scout`), a 'Paul-lite'**
 Paul (Trelium's scout agent) watches how work moves and returns the
 opportunity, the reasoning, and a ready-made prompt to build the agent.
 This scout does the same over an email/thread export:
@@ -18,17 +18,17 @@ This scout does the same over an email/thread export:
   prompt/spec, in Paul's exact output shape
 
 Clustering is deterministic (keyword rules in `app/scout.py`). An LLM could
-polish the wording later — it should never decide the ranking.
+polish the wording later, it should never decide the ranking.
 
 **2. Deterministic PO/Invoice Matcher (`/matcher`)**
 - ingests a PO and a vendor invoice (structured fixtures in `data/`;
   PDF/text extraction would produce the same shape upstream)
 - compares qty, unit price, freight and setup fee with a pure rules
-  engine — deterministic where it matters, no LLM in the decision path
+  engine, deterministic where it matters, no LLM in the decision path
 - emits an **exception report**: both values, the delta, severity
 - **human-in-the-loop:** an exception stays `pending` until a human
   approves/rejects it; the decision is logged to a mock CRM
-  (`app/crm.py` — in production this is one webhook POST to
+  (`app/crm.py`, in production this is one webhook POST to
   HubSpot/Salesforce/a sheet)
 
 The demo fixture reproduces Trelium's own public example: PO freight
