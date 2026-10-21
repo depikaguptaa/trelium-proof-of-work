@@ -1,0 +1,56 @@
+// Default schema: PostgreSQL.
+// Run it with: docker compose up -d, then npm run db:push
+// For a no Docker dev loop, prisma/schema.sqlite.prisma mirrors these
+// models on SQLite. See README.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MatchReport {
+  id             String   @id
+  poId           String
+  invoiceId      String
+  status         String
+  fieldsChecked  String
+  mismatchCount  Int
+  mismatches     String
+  totalDelta     Float
+  approvalState  String   @default("pending")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  approval    Approval?
+  crmEntries  CrmLogEntry[]
+}
+
+model Approval {
+  id        Int      @id @default(autoincrement())
+  reportId  String   @unique
+  decision  String
+  approver  String
+  note      String   @default("")
+  createdAt DateTime @default(now())
+
+  report MatchReport @relation(fields: [reportId], references: [id])
+}
+
+model CrmLogEntry {
+  id            Int      @id @default(autoincrement())
+  system        String
+  event         String
+  reportId      String
+  decision      String
+  approver      String
+  note          String   @default("")
+  matchStatus   String
+  mismatchCount Int
+  createdAt     DateTime @default(now())
+
+  report MatchReport @relation(fields: [reportId], references: [id])
+}

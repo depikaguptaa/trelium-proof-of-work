@@ -1,0 +1,122 @@
+# Paul-lite + PO/Invoice Matcher, a proof-of-work for Trelium
+
+Built by Depika Gupta as a working demo of Trelium's two public products.
+This version is built in Trelium's own stack: Next.js (App Router),
+TypeScript, React, and Postgres through Prisma. No API key needed, and
+nothing here touches Trelium's codebase.
+
+## What it does
+
+**1. Automation Scout, a "Paul-lite"** (`/api/scout/demo`)
+Paul, Trelium's scout agent, watches how work moves and returns the
+opportunity, the reasoning, and a ready-made prompt to build the agent.
+This scout does the same over an email or thread export:
+
+- clusters messages into repetitive back-office tasks (order re-entry,
+  status chases, invoice mismatches, proof approvals, quote requests)
+- ranks them by frequency times human minutes per occurrence
+- outputs the top opportunity with reasoning and a plain-English agent
+  prompt or spec, in Paul's output shape
+
+Clustering is deterministic (keyword rules in `lib/scout.ts`). An LLM
+could polish the wording later. It should never decide the ranking.
+
+**2. Deterministic PO/Invoice Matcher** (`/api/matcher/demo`)
+- ingests a PO and a vendor invoice (structured fixtures in `data/`;
+  PDF or text extraction would produce the same shape upstream)
+- compares qty, unit price, freight and setup fee with a pure rules
+  engine, deterministic where it matters, no LLM in the decision path
+- emits an exception report: both values, the delta, severity
+- human-in-the-loop: an exception stays `pending` until a human approves
+  or rejects it on the home page (or via `/api/matcher/approve`). The
+  decision is stored in Postgres with an approval row, and logged to a
+  CRM log table (in production that write is one webhook POST to
+  HubSpot, Salesforce, or a sheet). A report can only be decided once;
+  a second decision returns 409.
+
+The demo fixture reproduces Trelium's own public example: PO freight
+$4,000 vs invoice $4,200, a $200 delta, and 2 fields that do not match.
+The second mismatch in this synthetic fixture is a hoodie unit price,
+$24.00 vs $24.75.
+
+## Run it (Postgres, the default)
+
+```bash
+cd yc-trelium-ts
+npm install
+cp .env.example .env
+docker compose up -d          # Postgres 16 on localhost:5432
+npm run prisma:generate
+npm run db:push               # creates the tables
+npm run dev                   # http://localhost:8077
+```
+
+Then open http://localhost:8077 for the UI, or use the API directly:
+
+```bash
+curl localhost:8077/api/health
+curl localhost:8077/api/scout/demo
+curl localhost:8077/api/matcher/demo
+curl -X POST localhost:8077/api/matcher/approve \
+  -H 'Content-Type: application/json' \
+  -d '{"report_id":"EXC-0001","decision":"approved","approver":"ops-lead","note":"vendor confirmed"}'
+curl localhost:8077/api/crm/log
+```
+
+There are also POST endpoints that mirror the original Python version:
+`/api/scout/analyze` takes `{"emails": [...]}`, and `/api/matcher/compare`
+takes `{"po": {...}, "invoice": {...}}` and persists the report.
+
+## Run it without Docker (SQLite dev fallback)
+
+`prisma/schema.sqlite.prisma` mirrors the same models on SQLite, for
+machines without Docker. Postgres stays the default everywhere else.
+
+```bash
+npm install
+DATABASE_URL="file:./dev.db" npm run prisma:generate:sqlite
+DATABASE_URL="file:./dev.db" npm run db:push:sqlite
+DATABASE_URL="file:./dev.db" npm run dev
+```
+
+Switching providers regenerates the Prisma client, so re-run
+`npm run prisma:generate` before going back to Postgres.
+
+## Tests
+
+```bash
+npm test
+```
+
+Vitest covers the scout's clustering and ranking, the matcher rules
+(including the Trelium freight example verbatim and a clean MATCH case),
+and the full approval flow against a throwaway SQLite database: report
+persisted, decision recorded, CRM entry written, and a second decision
+rejected with 409.
+
+## Layout
+
+```
+app/page.tsx              React UI: scout results, matcher demo, approve buttons
+app/api/                  API routes (health, scout, matcher, crm log)
+lib/scout.ts              Automation Scout (clustering, ranking, agent prompt)
+lib/matcher.ts            deterministic rules engine
+lib/store.ts              Prisma persistence: reports, approvals, CRM log
+lib/data.ts               fixture loaders
+prisma/schema.prisma      Postgres schema (default)
+prisma/schema.sqlite.prisma  SQLite mirror for dev without Docker
+data/                     synthetic emails, PO, invoice fixtures
+tests/                    vitest (scout, matcher, approval flow)
+docker-compose.yml        local Postgres 16
+```
+
+## What I would build next
+
+1. Real ingestion: Gmail or Outlook export plus PDF extraction into the
+   same document schema, with per-field confidence and source citations.
+2. The agent runtime behind the scout's prompts: run the generated
+   plain-English spec as a workflow with tool calls into a real ERP or
+   CRM sandbox, with LLM observability traces on every run.
+3. A proper eval harness: labelled email exports and PO/invoice pairs,
+   scoring cluster accuracy and matcher precision and recall on every
+   change.

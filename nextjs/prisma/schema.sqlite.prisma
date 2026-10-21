@@ -1,0 +1,57 @@
+// Dev fallback schema: SQLite, same models as schema.prisma.
+// Use it when Postgres is not available locally:
+//   DATABASE_URL="file:./dev.db" npm run prisma:generate:sqlite
+//   DATABASE_URL="file:./dev.db" npm run db:push:sqlite
+// Postgres stays the default. Switch back with npm run prisma:generate.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model MatchReport {
+  id             String   @id
+  poId           String
+  invoiceId      String
+  status         String
+  fieldsChecked  String
+  mismatchCount  Int
+  mismatches     String
+  totalDelta     Float
+  approvalState  String   @default("pending")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  approval    Approval?
+  crmEntries  CrmLogEntry[]
+}
+
+model Approval {
+  id        Int      @id @default(autoincrement())
+  reportId  String   @unique
+  decision  String
+  approver  String
+  note      String   @default("")
+  createdAt DateTime @default(now())
+
+  report MatchReport @relation(fields: [reportId], references: [id])
+}
+
+model CrmLogEntry {
+  id            Int      @id @default(autoincrement())
+  system        String
+  event         String
+  reportId      String
+  decision      String
+  approver      String
+  note          String   @default("")
+  matchStatus   String
+  mismatchCount Int
+  createdAt     DateTime @default(now())
+
+  report MatchReport @relation(fields: [reportId], references: [id])
+}
