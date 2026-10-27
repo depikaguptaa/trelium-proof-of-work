@@ -12,6 +12,10 @@ export function sampleEmails(): EmailMessage[] {
   return load<EmailMessage[]>("sample_emails.json");
 }
 
+export function sampleMboxText(): string {
+  return readFileSync(path.join(DATA, "sample_inbox.mbox"), "utf-8");
+}
+
 export function samplePo(): MatchDocument {
   return load<MatchDocument>("sample_po.json");
 }

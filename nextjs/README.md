@@ -21,6 +21,20 @@ This scout does the same over an email or thread export:
 Clustering is deterministic (keyword rules in `lib/scout.ts`). An LLM
 could polish the wording later. It should never decide the ranking.
 
+**Real inbox ingestion** (`POST /api/scout/ingest`): the scout used to
+run on hand written JSON. It now takes a real exported mailbox: upload
+a Gmail Takeout `.mbox` file, or a single `.eml` message, and it is
+parsed into the same email shape and analyzed the same way. Parsing
+(`lib/mbox.ts`, no dependencies) unfolds headers, decodes RFC 2047
+encoded words, base64 and quoted-printable bodies, prefers text/plain
+in multipart mail with a stripped HTML fallback, and ignores
+attachments. Messages with nothing readable are counted as skipped in
+the response, never silently dropped. A sample export with 10 messages
+lives in `data/sample_inbox.mbox`. No OAuth and no mailbox access: the
+user exports the file themselves. Outlook `.msg` files are still
+future work. Files over 25 MB are rejected, trim the export to the
+date range being analyzed first.
+
 **2. Deterministic PO/Invoice Matcher** (`/api/matcher/demo`)
 - ingests a PO and a vendor invoice, either as structured documents or
   as real PDFs: `POST /api/matcher/ingest` takes the two PDF files,
@@ -70,6 +84,7 @@ curl -X POST localhost:8077/api/matcher/approve \
 curl localhost:8077/api/crm/log
 curl -F "po=@data/sample_po.pdf" -F "invoice=@data/sample_invoice.pdf" \
   localhost:8077/api/matcher/ingest
+curl -F "file=@data/sample_inbox.mbox" localhost:8077/api/scout/ingest
 ```
 
 The home page also has an upload form: pick a PO PDF and an invoice
@@ -104,10 +119,18 @@ npm test
 Vitest covers the scout's clustering and ranking, the matcher rules
 (including the Trelium freight example verbatim and a clean MATCH case),
 PDF ingestion (the sample PDFs extract into exactly the JSON fixtures,
-and a PDF with a missing field fails with the field named), and the
-full approval flow against a throwaway SQLite database: report
-persisted, decision recorded, CRM entry written, and a second decision
-rejected with 409. 14 tests in total.
+and a PDF with a missing field fails with the field named), mailbox
+ingestion (the sample .mbox parses into the scout input shape, encoded
+subjects and bodies decode, attachments are ignored, empty messages
+are counted as skipped, and the upload route returns the same analysis
+as the JSON path), and the full approval flow against a throwaway
+SQLite database: report persisted, decision recorded, CRM entry
+written, and a second decision rejected with 409. The eval harness
+(lib/eval.ts, evals/cases.ts, `npm run eval`) scores 7 labelled scout
+cases and 5 matcher cases against frozen expectations: cluster accuracy
+and top-opportunity accuracy for the scout, field precision and recall
+for the matcher, plus checks that the harness itself catches a changed
+label, a dropped label, and a wrong delta. 44 tests in total.
 
 ## Layout
 
@@ -116,6 +139,8 @@ app/page.tsx              React UI: scout results, matcher demo, approve buttons
 app/api/                  API routes (health, scout, matcher, crm log)
 lib/scout.ts              Automation Scout (clustering, ranking, agent prompt)
 lib/matcher.ts            deterministic rules engine
+lib/eval.ts               eval harness: labelled cases, scoring, printable report
+evals/cases.ts            golden set: 7 scout cases, 5 matcher cases
 lib/ingest.ts             PDF text extraction into matcher documents
 lib/store.ts              Prisma persistence: reports, approvals, CRM log
 lib/data.ts               fixture loaders
@@ -123,19 +148,20 @@ scripts/                  sample PDF generator (npm run pdfs:generate)
 prisma/schema.prisma      Postgres schema (default)
 prisma/schema.sqlite.prisma  SQLite mirror for dev without Docker
 data/                     synthetic emails, PO, invoice fixtures (JSON and PDF)
-tests/                    vitest (scout, matcher, PDF ingestion, approval flow)
+tests/                    vitest (scout, matcher, PDF ingestion, eval harness, approval flow)
 docker-compose.yml        local Postgres 16
 ```
 
 ## What I would build next
 
 1. Wider ingestion: PDF extraction for the sample layout is built
-   (see the matcher section above). Still to do: arbitrary vendor
-   layouts, Gmail or Outlook export as a document source, and
-   per-field confidence with source citations on extracted fields.
+   (see the matcher section above), and Gmail Takeout (.mbox) is a
+   scout source. Still to do: arbitrary vendor layouts, Outlook
+   export, and per-field confidence with source citations on
+   extracted fields.
 2. The agent runtime behind the scout's prompts: run the generated
    plain-English spec as a workflow with tool calls into a real ERP or
    CRM sandbox, with LLM observability traces on every run.
-3. A proper eval harness: labelled email exports and PO/invoice pairs,
-   scoring cluster accuracy and matcher precision and recall on every
-   change.
+3. Eval harness: built (lib/eval.ts, evals/cases.ts, `npm run eval`).
+   7 labelled scout cases and 5 matcher cases with frozen
+   expectations, scored on every change.

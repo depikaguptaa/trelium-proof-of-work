@@ -25,6 +25,12 @@ This scout does the same over an email/thread export:
 Clustering is deterministic (keyword rules). An LLM could polish the
 wording later, it should never decide the ranking.
 
+The TypeScript build also takes a real inbox export: upload a Gmail
+Takeout `.mbox` file (or a single `.eml`) to `POST /api/scout/ingest`
+and it is parsed into the same email shape and analyzed the same way,
+with unreadable messages counted as skipped. No OAuth, no mailbox
+access, the user exports the file themselves.
+
 **2. Deterministic PO/Invoice Matcher**
 - ingests a PO and a vendor invoice (structured fixtures in `data/`).
   The TypeScript build also takes real PDFs: upload a PO PDF and an
@@ -67,7 +73,8 @@ the same exception report, approving persists and a second decision
 on the same report returns 409.
 
 ```bash
-npm test                      # vitest, 14 tests
+npm test                      # vitest, 44 tests
+npm run eval                  # eval harness only: 7 scout + 5 matcher golden cases
 ```
 
 ## Run the Python build
@@ -95,9 +102,9 @@ curl localhost:8077/crm/log           # the approval, logged to the mock CRM
 ```
 nextjs/            TypeScript build (Next.js, React, Prisma, vitest)
   app/             UI page + API routes
-  lib/             scout, matcher, ingest (PDF extraction), store (Prisma persistence)
+  lib/             scout, matcher, ingest (PDF extraction), mbox (mailbox parsing), store (Prisma persistence)
   prisma/          Postgres schema + SQLite mirror
-  tests/           vitest (scout, matcher, approve flow)
+  tests/           vitest (scout, matcher, mailbox ingestion, eval harness, approve flow)
 app/               Python build: FastAPI routes, scout, matcher, mock CRM
 data/              synthetic emails, PO, invoice fixtures (shared shape)
 tests/             pytest for the Python build
@@ -106,11 +113,15 @@ tests/             pytest for the Python build
 ## What I'd build next
 
 1. Wider ingestion: PDF extraction into the same document schema is
-   built in the TypeScript build for the sample layout. Still to do:
-   arbitrary vendor layouts, Gmail/Outlook export as a source, and
-   per-field confidence with source citations.
+   built in the TypeScript build for the sample layout, and Gmail
+   Takeout (.mbox) export is now a scout source too. Still to do:
+   arbitrary vendor layouts, Outlook .msg export, and per-field
+   confidence with source citations.
 2. The agent runtime behind the scout's prompts: run the generated
    plain-English spec as a workflow with tool calls into a real ERP/CRM
    sandbox, with LLM-observability traces on every run.
-3. A proper eval harness: labelled email exports and PO/invoice pairs,
-   scoring cluster accuracy and matcher precision/recall on every change.
+3. Eval harness: built (nextjs/lib/eval.ts, nextjs/evals/cases.ts,
+   `npm run eval`). 7 labelled scout cases and 5 matcher cases with
+   frozen expectations, cluster accuracy and matcher precision/recall
+   scored on every change, and a regression run that fails loudly when
+   behavior moves.

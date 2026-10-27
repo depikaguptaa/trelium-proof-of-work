@@ -1,0 +1,91 @@
+From customer@acme.example Mon Oct 19 09:12:00 2026
+From: "Acme Apparel" <customer@acme.example>
+Subject: New order - PO #8834
+Message-ID: <m01@acme.example>
+Content-Type: text/plain; charset="UTF-8"
+
+Please enter the order for 300 navy hoodies per the attached purchase order.
+PO number 8834, delivery by Nov 2.
+
+From customer@acme.example Mon Oct 19 10:41:00 2026
+From: "Acme Apparel" <customer@acme.example>
+Subject: New order - PO #8835
+Message-ID: <m02@acme.example>
+Content-Type: text/plain; charset="UTF-8"
+
+New order, please re-enter: 150 white tees, PO number 8835. Same
+delivery address as last time.
+
+From buyer@northwind.example Mon Oct 19 11:05:00 2026
+From: Dana Whitfield <buyer@northwind.example>
+Subject: Where is our order?
+Message-ID: <m03@northwind.example>
+Content-Type: text/plain; charset="UTF-8"
+
+Hi, where is order 7710? Has it shipped yet? We need an ETA for our
+store opening on Friday.
+
+From buyer@northwind.example Mon Oct 19 13:22:00 2026
+From: Dana Whitfield <buyer@northwind.example>
+Subject: Any update on order 7710?
+Message-ID: <m04@northwind.example>
+Content-Type: text/plain; charset="UTF-8"
+
+Following up, any update on the delivery date for order 7710? The
+tracking link still shows nothing.
+
+From vendor@printworks.example Mon Oct 19 14:03:00 2026
+From: PrintWorks Billing <vendor@printworks.example>
+Subject: Invoice #5591 does not match PO #8819
+Message-ID: <m05@printworks.example>
+Content-Type: text/plain; charset="UTF-8"
+
+The invoice for PO 8819 shows freight of $4,200 but the purchase order
+says $4,000. There is a billing discrepancy, please check before paying.
+
+From vendor@printworks.example Mon Oct 19 15:47:00 2026
+From: PrintWorks Billing <vendor@printworks.example>
+Subject: Invoice #5592 freight overcharged
+Message-ID: <m06@printworks.example>
+Content-Type: text/plain; charset="UTF-8"
+
+Invoice 5592 is overcharged on freight again, $4,150 against the PO
+freight of $4,000. We are disputing this one too.
+
+From design@acme.example Mon Oct 19 16:19:00 2026
+From: Priya Nair <design@acme.example>
+Subject: Please approve the design proof
+Message-ID: <m07@acme.example>
+Content-Type: text/plain; charset="UTF-8"
+
+The pre-production proof for order 7720 is ready. Please approve the
+design proof so we can move it into production.
+
+From customer@acme.example Mon Oct 19 17:30:00 2026
+From: "Acme Apparel" <customer@acme.example>
+Subject: Quote request: 400 caps
+Message-ID: <m08@acme.example>
+Content-Type: text/plain; charset="UTF-8"
+
+Can you send a quote for 400 caps with embroidery? Need pricing for
+the full run, including the setup fee.
+
+From team@internal.example Mon Oct 19 18:02:00 2026
+From: Sam Ortiz <team@internal.example>
+Subject: Lunch on Thursday?
+Message-ID: <m09@internal.example>
+Content-Type: text/plain; charset="UTF-8"
+
+Are we still on for lunch on Thursday? I booked the place near the
+office, let me know if the time moved.
+
+From customer@acme.example Mon Oct 19 18:44:00 2026
+From: "Acme Apparel" <customer@acme.example>
+Subject: =?UTF-8?B?TmV3IG9yZGVyIC0gUE8gIzg4MzY=?=
+Message-ID: <m10@acme.example>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+Please enter the order for 200 black tees, purchase order 8836.
+The notes say the order is
+>From the catalog, rush delivery.
